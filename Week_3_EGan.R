@@ -20,6 +20,10 @@ data3 <- read.csv("week3_dataset-emilia.csv", header = TRUE)
 
 summary(data3)
 
+lapply(data3, summary)
+
+str(data3)
+
 dim(data3)
 
 hist(data3$x)
@@ -30,7 +34,11 @@ hist(data3$y)
 
 table(data3)
 
+table(data3$k)
+
 str(data3)
+
+plot(data3)
 #----------------------------------------------------------------------------------------
 # PC5. Compare the week2.dataset vector with the first column (x) of the data frame.
 #      I mentioned in the video lecture that they are similar? Do you agree? How similar? 
@@ -113,6 +121,12 @@ p3 <- p3 + aes(x = data3$x, y = data3$y) + geom_point(aes(color = factor(data3$k
 
 p3
 
+df3 <- as.data.frame(data3)
+
+p4 <- ggplot(df3)
+
+p4 + ggplot(df3) + aes(x=x, y=y, shape=j) + geom_point()
+
 #----------------------------------------------------------------------------------------
 # PC7. A very common step when you import and prepare for data analysis is going to be cleaning 
 #      and coding data. Some of that is needed here. As is very common, i, j are really 
@@ -139,7 +153,14 @@ data3$k
 
 View(data3)
 
+testing <- ifelse(data3$i == 0, FALSE, TRUE)
+testing
 
+# Can also change factors thusly:
+
+# data.factor[data == 0] <- "none"
+# data.factor[data == 1] <- "one"
+# etc.
 #----------------------------------------------------------------------------------------
 # PC8. Take column i and set it equal to NA when if it is FALSE (i.e., 0). Then set all the values 
 #      that are NA back to 1. Sorry for the busy work! ;)
@@ -224,3 +245,21 @@ data3table
 some.data <- c(as.numeric(data3table[1:4]))
 names(some.data) <- c(levels(data3k_levels))
 barplot(some.data)
+
+# ---------------------------------
+# Last stats problem
+# A 2005 Gallup Poll found that 7% of teenagers (ages 13 to 17) suffer
+# from arachnophobia and are extremely afraid of spiders. At a summer camp there are 10 teenagers
+# sleeping in each tent. Assume that these 10 teenagers are independent of each other.
+
+# a) At least 1 = 1, 2, 3, 4, 5, 6, 7, 8, 9. or 10 -- i.e. all except 0
+1 - dbinom(0, size=10, prob=0.07) 
+# 0.5160177
+
+# b) exactly 2
+dbinom(2, size=10, prob=0.07) 
+# 0.1233878
+
+# c) at most 1 = 0 or 1 or 1, cumulative
+pbinom(1, size=10, prob=0.07) 
+# 0.8482701
