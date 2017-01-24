@@ -1,3 +1,12 @@
+# NEED TO LOOK AT MAKO'S SOLUTIONS -- Missed the boat on this one
+# ALSO -- read up on tapply() and merge()
+
+# merge(x,y,by)
+
+# And maybe watch the video for this week - probably would have saved much time :-P
+
+# views <- merge(mobile.views, total.views, all,x=TRUE, all.y=TRUE, by.x = c("city","state"), by.y=c("city.name", "state.abbrev"))
+# DOING JOINING - two datasets with one column the same and finding ALL the values for that common value
 
 setwd("C:/Users/Emilia/Documents/AAAA_2017winter/Stats/COM521_EG/")
 
@@ -21,6 +30,14 @@ dataTop5K <- read.csv("Top5K.csv", header = TRUE)
 
 View(dataMobile)
 View(dataTop5K)
+
+#--------------------------
+monthlyViews <- tapply(dataTop5K$Pageviews, dataMobile$Sessions, sum)
+
+table(dataTop5K$Month)
+
+
+#--------------------------
 
 # Did some cleaning of dataMobile in Excel -- removed blank rows in the middle of the table
 
@@ -131,7 +148,7 @@ dataMobile <- read.csv("MobileData.csv", header = TRUE)
 newMobile <- as.data.frame(dataMobile[,])
 View(newMobile)
 
-monthMobile <- as.data.frame(cbind(as.vector(newMobile$Operating_System), as.vector(newMobile$Sessions), as.vector(newMobile$Month)))
+monthMobile <- as.data.frame(cbind(as.vector(newMobile$Operating_System), as.vector(newMobile$Sessions * newMobile$PagesPerSession), as.vector(newMobile$Month)))
 View(monthMobile)
 colnames(monthMobile) <- c("OS", "Views", "Month")
 
@@ -153,6 +170,13 @@ mobileVector <- as.vector(data$AvgMobileViews)
 mergedData <- as.data.frame(cbind(monthVector, topVector, mobileVector))
 mergedData
 
+monthVector <- as.vector(data$Month)
+topVector <- as.vector(top5K_monthSums$TotViews)
+mobileVector <- as.vector(data$AvgMobileViews)
+
+mergedData <- as.data.frame(cbind(monthVector, topVector, mobileVector))
+mergedData
+
 # Not sure what we are trying to show here
 # I don't know why November is missing from both datasets
 
@@ -163,6 +187,8 @@ mergedData
 #      is a date or datetime object in R.
 
 # I think maybe I wasn't supposed to aggregate by ACTUAL month - but instead by Date?
+# I also think somewhere along the way I forgot what question I was supposed to be answering.
+# Obviously, I should have been sleeping instead of "doing" R homework 
 
 # Redo Top 5K work with Dates
 newTop500 <- as.data.frame(dataTop5K[,])
@@ -290,3 +316,5 @@ colnames(newDF) <- c("x","variable","y")
 ggplot(newDF, aes(x = newDF$x, y = newDF$y, color = newDF$variable)) + 
     geom_line(size = 1) + geom_point(size = 3) + 
     scale_color_brewer(palette = "Set1")
+
+# complete case returns true for every row where there is complete data for all columns
