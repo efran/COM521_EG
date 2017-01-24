@@ -254,3 +254,39 @@ FTdate <- as.Date(as.vector(FTdate))
 willThisWork <- as.data.frame(cbind(as.character(FTdate), FTtop, FTmobile))
 colnames(willThisWork) = c("Month", "Top", "Mobile")
 View(willThisWork)
+
+# PC6. Graph this over time and be ready to describe: 
+#      (a) your best estimate of the proportion of views from mobiles 
+#             to the Seattle City website over time and 
+#      (b) an indication of whether it's going up or down
+
+library(ggplot2)
+
+
+ggplot(willThisWork, aes(x = willThisWork$Month, y = willThisWork$Top)) + 
+    geom_bar(stat = "identity") +
+    theme_bw() +
+    labs(x = "Month", y = "visits")
+
+ggplot(willThisWork, aes(x = willThisWork$Month, y = willThisWork$Mobile)) + 
+    geom_bar(stat = "identity") +
+    theme_bw() +
+    labs(x = "Month", y = "visits")
+
+ggplot(willThisWork, aes(x = willThisWork$Month, y = c(willThisWork$Top,willThisWork$Mobile))) + 
+    geom_bar(stat = "identity") +
+    theme_bw() +
+    labs(x = "Month", y = "visits")
+
+stackedDF <- as.data.frame( x = c(as.Date(willThisWork$Month), as.Date(willThisWork$Month)))
+platform = as.data.frame(c(rep("Top", length(willThisWork$Top)), rep("Mobile", length(willThisWork$Mobile))))
+values = as.data.frame(c(as.vector(willThisWork$Top), as.vector(willThisWork$Mobile)))
+colnames(values) <- c("x")
+
+
+newDF <- as.data.frame(cbind(stackedDF, platform, values))
+colnames(newDF) <- c("x","variable","y")                         
+
+ggplot(newDF, aes(x = newDF$x, y = newDF$y, color = newDF$variable)) + 
+    geom_line(size = 1) + geom_point(size = 3) + 
+    scale_color_brewer(palette = "Set1")
