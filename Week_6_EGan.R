@@ -121,7 +121,7 @@ fit
 #    aov(formula = tod ~ group, data = DF)
 
 # Terms:
-#    group Residuals
+#                    group Residuals
 # Sum of Squares   4051.96  12937.43
 # Deg. of Freedom        3        34
 
@@ -135,3 +135,47 @@ summary(fit)
 # Residuals   34  12937   380.5                 
 #---
 # Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+#-------------------OPEN DATA QUESTIOND
+
+# Q1 - 6.12 CI interval for proportion
+
+pbar = 0.48
+n = 1259
+
+SE = sqrt(pbar*(1 - pbar)/n); SE     # standard error
+E = qnorm(0.975) * SE; E              # margin of error
+pbar + c(-E, E) 
+
+# [1] 0.4524033 0.5075967
+
+# Q2 - 6.20
+
+qbar = 1 - pbar
+
+# n = pq/SE^2
+# SE = E/ qnorm(0.975)
+SE = 0.02 / qnorm(0.975)
+n = (pbar * qbar) / (SE * SE)
+n
+
+# [1] 2397.07 --> 2398
+
+#6.50 - chi square
+chi_2 = (83-90)^2/90 + (121-110)^2/110 + (193-185)^2/185 + (103-115)^2/115
+chi_2
+
+# [1] 3.242564
+
+data <- rbind(c(83,90), c(121, 110), c(193, 185), c(103, 115))
+colnames(data) <- c("sample", "US")
+row.names(data) <- c("NE", "NC","S","W")
+
+results <- chisq.test(data)
+results
+
+# Pearson's Chi-squared test
+
+# data:  data
+# X-squared = 1.6369, df = 3, p-value = 0.6511
+                 
