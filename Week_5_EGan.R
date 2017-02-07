@@ -144,7 +144,7 @@ summary(data$x)
 
 # The mean and the median are very close -- very little skew (essentially none)
 
-hist(wk3_data$x)
+hist(wk3_data$x, breaks=15)
 # The histogram does NOT look symmetrical 
 
 summary(wk3_data$x)
@@ -238,7 +238,7 @@ summary(test_10)
 # 1.995   3.998   4.559   4.464   5.029   6.175
 
 test_100 <- get_means(generated_vector, 100)
-hist(test_100)
+hist(test_100, breaks=20)
 # the max and min are getting closer to the mean
 
 summary(test_100)
