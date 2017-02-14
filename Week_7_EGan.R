@@ -32,6 +32,16 @@ View(US_data)
 table_1 <- table(data$gender, data$order_type)
 table_1
 
+table_test <- table(data$gender, data$order_type)
+levels(data$gender)
+
+### CAUTION: NOT SURE RELEVEL OR FACTOR DO WHAT I WANT -- WOULD WANT TO MAKE SURE CORRECT
+### LABELS MATCHED WITH CORRECT NUMBERS
+
+data$gender <- factor(data$gender, levels = c("unknown", "male","female"))
+
+table_test
+
 #         arduino only both lilypad only
 # female           890   79          367
 # male            7687  250          598
@@ -221,6 +231,8 @@ prop.test(cdsw.table)
 #    prop 1    prop 2 
 # 0.6885246 0.6888889 
 
+# PROPORTIONS ARE REPORTED AS DAY 1/ (DAY 1 + DAY 2)
+
 chisq.test(cdsw.table)
 
 # Pearson's Chi-squared test with Yates' continuity correction
@@ -294,3 +306,29 @@ prop.test(obama_fruit_contigency_table)
 # are doing linear regression with this binary data... It is probably just one feature 
 # in an additive linear model.
 
+
+# TEXTBOOK QUESTIONS
+
+# 7.40
+
+# a) average standardized beauty score is -0.0883 
+#    and average teaching evaluation score is 3.9983
+
+# y = mx + b
+# 3.9983 = m(-.0883) + 4.01
+
+m = (3.9983 - 4.01)/-0.0883
+m
+
+# [1] 0.1325028
+
+# b) Do these data provide convincing evidence that the slope of the relationship 
+#    between teaching evaluation and beauty is positive?
+
+t = 4.13
+se = .0322
+
+CI = c( m - t * se, m + t * se)
+CI
+
+# [1] -0.0004831687  0.2654888313
