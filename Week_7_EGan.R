@@ -297,6 +297,8 @@ prop.test(obama_fruit_contigency_table)
 #     prop 1    prop 2 
 # 0.7622108 0.7252252
 
+prop.test(c(31, 14), c(42, 19))
+
 # The proportions test finds no difference in the two groups 
 # (those who chose fruit and those who didn't) based on whether or not 
 # they were shown a picture of Michelle Obama. I think the result is different 
@@ -325,7 +327,7 @@ m
 # b) Do these data provide convincing evidence that the slope of the relationship 
 #    between teaching evaluation and beauty is positive?
 
-t = 4.13
+t = 2 # 2-ish
 se = .0322
 
 CI = c( m - t * se, m + t * se)
