@@ -317,6 +317,11 @@ summary(fruit_ay_2012.lm)
 # F-statistic: 0.9929 on 2 and 161 DF,  p-value: 0.3728
 
 qqnorm(resid(fruit_ay_2012.lm))
+plot(halloween_2012$obama, resid(fruit_ay_2012.lm))
+dim(halloween_2012)
+length(resid(fruit_ay_2012.lm))
+
+# Missing one of the 2012 values
 
 
 halloween_2014 <- halloween[halloween$year == "2014",]
@@ -343,6 +348,9 @@ summary(fruit_ay_2014.lm)
 # F-statistic: 0.1103 on 2 and 419 DF,  p-value: 0.8956
 
 qqnorm(resid(fruit_ay_2014.lm))
+plot(halloween_2014$obama, resid(fruit_ay_2014.lm))
+dim(halloween_2014)
+length(resid(fruit_ay_2014.lm))
 
 halloween_2015 <- halloween[halloween$year == "2015",]
 fruit_ay_2015.lm <- lm(fruit ~ obama + age + year, data=halloween_2015)
@@ -369,3 +377,5 @@ summary(fruit_ay_2015.lm)
 
 qqnorm(resid(fruit_ay_2015.lm))
 plot(halloween_2015$obama, resid(fruit_ay_2015.lm))
+
+
