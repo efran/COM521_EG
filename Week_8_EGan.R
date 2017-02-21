@@ -277,5 +277,95 @@ summary(fruit_age_year.lm)
 # PC8. Take a look at the residuals for your model in (a) and try to interpret these as you would in PC4 above. 
 #      What do you notice?
 
+# Year 2012 was left out -- not sure why
+
+fruit_ay.res <- resid(fruit_age_year.lm)
+qqnorm(fruit_ay.res)
+
+# The residuals are not normally distributed
+plot(halloweeny$obama, fruit_ay.res)
+dim(halloweeny)
+length(fruit_ay.res)
+# -- Plotting doesn't work because the lm functin eliminated one observation
+# due to "missingness"
+# not sure what is meant by this, as all values seem present in the data
+
+
 # PC9. Run the simple model in (a) three times on three subsets of the dataset: 
 #      just 2012, 2014, and 2015. Be ready to talk through the results.
+
+halloween_2012 <- halloween[halloween$year == "2012",]
+fruit_ay_2012.lm <- lm(fruit ~ obama + age + year, data=halloween_2012)
+summary(fruit_ay_2012.lm)
+# Call:
+#     lm(formula = fruit ~ obama + age + year, data = halloween_2012)
+# 
+# Residuals:
+#     Min      1Q  Median      3Q     Max 
+# -0.3907 -0.2454 -0.2019 -0.1557  0.8443 
+# 
+# Coefficients: (1 not defined because of singularities)
+# Estimate Std. Error t value Pr(>|t|)
+# (Intercept)  0.08308    0.11229   0.740    0.460
+# obama        0.06065    0.06756   0.898    0.371
+# age          0.01453    0.01213   1.197    0.233
+# year              NA         NA      NA       NA
+# 
+# Residual standard error: 0.4232 on 161 degrees of freedom
+# (1 observation deleted due to missingness)
+# Multiple R-squared:  0.01218,	Adjusted R-squared:  -8.701e-05 
+# F-statistic: 0.9929 on 2 and 161 DF,  p-value: 0.3728
+
+qqnorm(resid(fruit_ay_2012.lm))
+
+
+halloween_2014 <- halloween[halloween$year == "2014",]
+fruit_ay_2014.lm <- lm(fruit ~ obama + age + year, data=halloween_2014)
+summary(fruit_ay_2014.lm)
+# Call:
+#     lm(formula = fruit ~ obama + age + year, data = halloween_2014)
+# 
+# Residuals:
+#     Min      1Q  Median      3Q     Max 
+# -0.2519 -0.2310 -0.2184 -0.2120  0.7896 
+# 
+# Coefficients: (1 not defined because of singularities)
+# Estimate Std. Error t value Pr(>|t|)    
+# (Intercept) 0.205546   0.059304   3.466 0.000583 ***
+#     obama       0.015840   0.042378   0.374 0.708752    
+# age         0.001604   0.006433   0.249 0.803215    
+# year              NA         NA      NA       NA    
+# ---
+#     Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# 
+# Residual standard error: 0.419 on 419 degrees of freedom
+# Multiple R-squared:  0.0005263,	Adjusted R-squared:  -0.004244 
+# F-statistic: 0.1103 on 2 and 419 DF,  p-value: 0.8956
+
+qqnorm(resid(fruit_ay_2014.lm))
+
+halloween_2015 <- halloween[halloween$year == "2015",]
+fruit_ay_2015.lm <- lm(fruit ~ obama + age + year, data=halloween_2015)
+summary(fruit_ay_2015.lm)
+# Call:
+#     lm(formula = fruit ~ obama + age + year, data = halloween_2015)
+# 
+# Residuals:
+#     Min      1Q  Median      3Q     Max 
+# -0.3196 -0.2557 -0.2544  0.6817  0.7480 
+# 
+# Coefficients: (1 not defined because of singularities)
+# Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)  0.2574160  0.0542600   4.744 2.59e-06 ***
+#     obama        0.0632093  0.0385150   1.641    0.101    
+# age         -0.0003352  0.0057515  -0.058    0.954    
+# year                NA         NA      NA       NA    
+# ---
+#     Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# 
+# Residual standard error: 0.4459 on 633 degrees of freedom
+# Multiple R-squared:  0.004242,	Adjusted R-squared:  0.001095 
+# F-statistic: 1.348 on 2 and 633 DF,  p-value: 0.2605
+
+qqnorm(resid(fruit_ay_2015.lm))
+plot(halloween_2015$obama, resid(fruit_ay_2015.lm))
