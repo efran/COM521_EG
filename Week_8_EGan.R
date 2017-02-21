@@ -156,6 +156,16 @@ summary(fit_c)
 # Multiple R-squared:  0.7481,	Adjusted R-squared:  0.7318 
 # F-statistic: 46.03 on 6 and 93 DF,  p-value: < 2.2e-16
 
+confint(fit_c)
+#                  2.5 %     97.5 %
+# (Intercept) -56.645136  96.956068
+# x             3.445055   4.411144
+# iTRUE        17.031718  99.459343
+# jTRUE        11.832114  94.242112
+# k1          -45.405123  98.769642
+# k2          -79.024688  67.279382
+# k3          -31.743043 131.918523
+
 #--------------------------------------------------------------------
 # PC5. Generate a set of residual plots for the final model (c) 
 #      and be ready to interpret your model in terms of each of these:
@@ -378,4 +388,36 @@ summary(fruit_ay_2015.lm)
 qqnorm(resid(fruit_ay_2015.lm))
 plot(halloween_2015$obama, resid(fruit_ay_2015.lm))
 
+# TEXTBOOK STUFF
 
+Temps <- c(53,57,58,63,66,67,67,67,68,69,70,70,70,70,72,73,75,75,76,76,78,79,81)
+Damaged <- c(5,1,1,1,0,0,0,0,0,0,1,0,1,0,0,0,0,1,0,0,0,0,0)
+Undamaged <- c(1,5,5,5,6,6,6,6,6,6,5,6,5,6,6,6,6,5,6,6,6,6,6)
+
+Oring <- data.frame(Temps, Damaged, Undamaged)
+View(Oring)
+temp_damage.lm <- lm(Damaged ~ Temps, data=Oring)
+summary(temp_damage.lm)
+# Call:
+#     lm(formula = Damaged ~ Temps, data = Oring)
+# 
+# Residuals:
+#     Min      1Q  Median      3Q     Max 
+# -0.8271 -0.6207 -0.1421  0.3961  2.9007 
+# 
+# Coefficients:
+#     Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)  7.28571    1.79956   4.049 0.000578 ***
+#     Temps       -0.09786    0.02574  -3.801 0.001043 ** 
+#     ---
+#     Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# 
+# Residual standard error: 0.8521 on 21 degrees of freedom
+# Multiple R-squared:  0.4076,	Adjusted R-squared:  0.3794 
+# F-statistic: 14.45 on 1 and 21 DF,  p-value: 0.001043
+
+plot(Oring$Temps, Oring$Damaged)
+
+# Estimate Std. Error z value Pr(>|z|)
+# (Intercept) 11.6630 3.2963 3.54 0.0004
+# Temperature -0.2162 0.0532 -4.07 0.0000
