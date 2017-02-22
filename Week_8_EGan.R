@@ -393,11 +393,16 @@ plot(halloween_2015$obama, resid(fruit_ay_2015.lm))
 Temps <- c(53,57,58,63,66,67,67,67,68,69,70,70,70,70,72,73,75,75,76,76,78,79,81)
 Damaged <- c(5,1,1,1,0,0,0,0,0,0,1,0,1,0,0,0,0,1,0,0,0,0,0)
 Undamaged <- c(1,5,5,5,6,6,6,6,6,6,5,6,5,6,6,6,6,5,6,6,6,6,6)
+Failure <- c(1,1,1,1,0,0,0,0,0,0,1,0,1,0,0,0,0,1,0,0,0,0,0)
+
+Failure <- as.factor(Failure)
 
 Oring <- data.frame(Temps, Damaged, Undamaged)
 View(Oring)
 temp_damage.lm <- lm(Damaged ~ Temps, data=Oring)
 summary(temp_damage.lm)
+Ofail <- data.frame(Temps,Failure)
+
 # Call:
 #     lm(formula = Damaged ~ Temps, data = Oring)
 # 
@@ -418,6 +423,37 @@ summary(temp_damage.lm)
 
 plot(Oring$Temps, Oring$Damaged)
 
-# Estimate Std. Error z value Pr(>|z|)
+Ofail.lm <- lm(Failure ~ Temps, data=Ofail)
+summary(Ofail.lm)
+
+#             Estimate Std. Error z value Pr(>|z|)
 # (Intercept) 11.6630 3.2963 3.54 0.0004
 # Temperature -0.2162 0.0532 -4.07 0.0000
+
+# log(pi/(1-pi)) --> e^(Bo + Bx + ...)/ (1 + e^(Bo + Bx + ...))
+
+# For the intercept
+pt_est_Bo <- exp(11.663)/(1+exp(11.663))
+pt_est_Bo   
+# [1] 0.9999914
+
+pt_est_B1 <- exp(11.663 - 0.2162)/(1+exp(11.663- 0.2162))
+pt_est_B1
+# [1] 0.9999893
+
+# logit(pi) = 11.663 - 0.2162 * (Temperature)
+
+# Add these points to the plot
+# pˆ57 = 0.341 ˆp59 = 0.251 ˆp61 = 0.179 ˆp63 = 0.124
+# 
+# pˆ65 = 0.084 ˆp67 = 0.056 ˆp69 = 0.037 ˆp71 = 0.024
+
+Temps <- c(53,57,59,61,63,65,67,69,71)
+Damaged <- c(5, 0.341,0.251,0.179,0.124,0.084,0.056,0.037,0.024)
+x2 <- c(53,57,58,63,66,67,67,67,68,69,70,70,70,70,72,73,75,75,76,76,78,79,81)
+y2 <- c(5,1,1,1,0,0,0,0,0,0,1,0,1,0,0,0,0,1,0,0,0,0,0)
+
+
+
+plot(x2,y2,col='red', type="b")
+lines(Temps, Damaged,col='blue', type="b") 
