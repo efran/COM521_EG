@@ -1,0 +1,624 @@
+---
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+## Project Outline: 
+### An Exploration of Gender Differences in Sharing Behavior on Scratch
+#### Emilia Gan -- COM 521, Winter 2017 
+  
+## 1. Rationale
+It is well known that women are underrepresented in computer science and other computational fields. Previous research has suggested that boys and girls interact with the Scratch programming language and the online Scratch community in different ways. Scratch is the first experience with programming for many, if not most, children. The attitudes towards programming formed by children using the Scratch online programming platform thus likely affect future decisions such as whether to study computational fields or to pursue careers in tech.  
+  
+The online Scratch platform provides Scratchers with a rich social environment that can influence how they view themselves as programmers and how they grow and develop their skills. Programs created using Scratch can be shared online, making them fully viewable by all others on the Scratch platform. Members of the Scratch community provide feedback on projects and may even remix portions of others' projects in their own creations. Participating fully in the Scratch online community offers developing programmers resources and support that should enhance their learning.  
+  
+Our study will examine the differences in project sharing behavior between girls and boys using the Scratch platform. In particular, we will investigate whether there are differences in the sharing patterns of male versus female users and look into whether differences exist in the peer feedback received by projects based on the gender of the project creator. We are especially interested in determining if female Scratchers are less likely to share their projects and whether they are more sensitive to the feedback received by the projects they do share.  
+  
+
+## 2. Objectives
+
+### General Objective
+  
+To examine how peer recognition of shared projects affects future project sharing behavior by the same Scratcher.
+
+### Specific Objectives
+  
+1) To determine whether there are differences in the pattern of Scratch project creation and sharing between male and female users of the Scratch online programming platform. 
+2) To determine if there is a difference in the frequency of receiving peer feedback between projects created by female users and projects created by male users.
+3) To determine if receiving peer feedback (e.g. love-its and comments) affects the future sharing behavior of the project creator.
+
+### Null Hypotheses
+  
+To explore the objectives stated above, we will test the following hypotheses:
+
+1) Projects created by females are just as likely to be shared as projects created by males.
+2) Projects created by females are just as likely to receive peer recognition as projects created by males.
+3) Scratchers whose shared projects receive no peer recognition are just as likely to share future projects as are Scratchers whose earlier shared projects did receive peer recognition.
+4) Female Scratchers whose shared projects receive no peer recognition are just as likely to share future projects as are male Scratchers whose shared projects receive no peer recognition.
+
+## 3. Conceptual Diagrams
+
+### Conceptual Diagram 1: Project Outcomes
+  
+The first conceptual diagram depicts the possible outcomes for a newly created project.
+  
+![Conceptual Diagram for Potential Outcomes following Project Creation.](/Users/emiliagan/Documents/ScratchProject/ScratchData/concept_diagram_2.png)
+  
+### Conceptual Diagram 2: Factors Potentially Influencing Project Sharing
+
+The second conceptual diagram depicts the factors that may contribute to the decision to share or not share a project.
+   
+![Conceptual Diagram for Factors Potentially Influencing Sharing](/Users/emiliagan/Documents/ScratchProject/Conceptual_Diagram.png)
+  
+## 4. Data Set
+
+### Taking a Sample from the Scratch Data Set
+
+```{r}
+# The SQL code below was used to sample the Scratch Database. Setting the random seed to 11 and selecting for values < 0.1,
+```
+
+For the analysis presented in this report, a sample of ~871K users were randomly selected from the Scratch data set. These users created over 4.86 million projects. The SQL code used to extract the sample data set is shown:
+  
+![SQL code used to generate the sample data set.](/Users/emiliagan/Documents/ScratchProject/ScratchData/SQL3.png)
+  
+## 5. Exploring the Data
+
+Before starting any analysis, an examination of the data gives the following information:
+
+```{r loadData, echo=FALSE}
+library(knitr)
+library(xtable)
+info_data <- read.csv("../ScratchProject/ScratchData/egFirstShared_sample3.csv")
+info_data$gender[info_data$gender=="Female"] <- "female"
+info_data$gender[info_data$gender=="FEMALE"] <- "female"
+info_data$gender[info_data$gender=="female "] <- "female"
+info_data$gender[info_data$gender=="Male"] <- "male"
+info_data$gender[info_data$gender=="mÃ¢le"] <- "male"
+```
+
+```{r dataSummary, echo=FALSE}
+gender.table <- table(droplevels(info_data$gender))
+
+female.projects <- info_data[info_data$gender == "female",]
+male.projects <- info_data[info_data$gender == "male",]
+f <- length(female.projects$id)
+m <- length(male.projects$id)
+tot <- f + m
+  
+
+g.table <- as.table(matrix(c(f, m, tot, format(round((f*100)/tot, 2), nsmall = 2), format(round((m*100)/tot, 2), nsmall = 2), format(round(100, 2), nsmall = 2)), ncol = 2, byrow=FALSE))
+
+colnames(g.table) <- c("Projects", "Percent")
+rownames(g.table) <- c("Female ","Male ", "Total")
+
+kable(g.table, main = "Projects Divided by Gender of Creator")
+
+```
+  
+*Table 1: Project Count by Gender of Creator*
+
+```{r modifyDataFrame, echo=FALSE}
+tmp <- data.frame(prev.projects=unlist(tapply(info_data$id, info_data$id, function (x) {seq(0, length(x)-1)})),
+                  id=unlist(tapply(info_data$id, info_data$id, function (x) {x})))
+
+info_data <- info_data[order(info_data$id, info_data$datetime_first_shared),]
+tmp <- tmp[order(tmp$id, tmp$prev.projects),]
+info_data$prev.projects <- tmp$prev.projects
+
+# Add column to track running sum of loveits
+tmp2 <- data.frame(running.lovecount=unlist(tapply(info_data$love_count, info_data$id, function (x) {cumsum(x)})),
+                   id=unlist(tapply(info_data$id, info_data$id, function (x) {x})))
+
+info_data <- info_data[order(info_data$id, info_data$datetime_first_shared),]
+tmp <- tmp[order(tmp$id, tmp2$running.lovecount),]
+info_data$running.lovecount <- tmp2$running.lovecount
+
+# Add column to track running loveit count for all previous projects
+info_data$previous.total.love <- info_data$running.lovecount - info_data$love_count
+info_data$datetime_first_shared[info_data$datetime_first_shared=="NULL"] <- NA
+```
+```{r statsTrivia, echo=FALSE}
+
+# Maximum number of projects created by a single user
+max.projects = max(info_data$prev.projects)
+
+# To find number of unique users, using union method on the id column (twice),
+# since union will eliminate duplicated values.
+set_users <- union(info_data$id, info_data$id)
+unique.female <- length(union(info_data$id[info_data$gender == "female"],info_data$id[info_data$gender == "female"]))
+unique.male <- length(union(info_data$id[info_data$gender == "male"],info_data$id[info_data$gender == "male"]))
+tot.unique.users <- length(set_users)
+percent.female.users <- unique.female*100/tot.unique.users
+percent.male.users <- unique.male*100/tot.unique.users
+```
+  
+This data set contains information on 4,859,202 Scratch projects. Approximately 40% of the projects were created by female Scratchers. Almost 600,000 unique Scratchers are represented in this dataset (236,606 female (39.6 %) and 360,428 male(60.4 %)).
+  
+The following visualizations were created to help with the initial data exploration process.
+  
+Looking first at numbers of projects created (Project numbers 200 and higher are grouped together):
+
+```{r histogramProjectNumbers, echo=FALSE}
+
+info_projects <- info_data
+info_projects$prev.projects[info_projects$prev.projects >= 200] <- 200
+hist(info_projects$prev.projects, breaks = 20, col="lightgreen",main="Histogram of Project Numbers", xlab="Project Number")
+
+```
+  
+As this histogram shows, most people create a small number of projects, thus the bin containing 1st through 10th projects contains many more projects than any other bin. However, significant numbers of Scratchers create many more projects, with the most prolific Scratcher in this dataset creating close to 4000 projects. 
+  
+Looking next at histograms of view counts for both the female and the male subsets in the data:
+
+```{r histogramFemale, echo=FALSE}
+info_female <- info_data[info_data$gender == "female",]
+info_female$view_count_mod <- info_female$view_count
+info_female$view_count_mod[info_female$view_count_mod >= 50] <- 50
+hist(info_female$view_count_mod, breaks = 20, col="lightgreen", main = "Histogram of View Counts for \n Projects Created by Females", xlab="View Count - Projects (Female)")
+```
+```{r histogramMale, echo=FALSE}
+info_male <- info_data[info_data$gender == "male",]
+info_male$view_count_mod <- info_male$view_count
+info_male$view_count_mod[info_male$view_count_mod >= 50] <- 50
+hist(info_male$view_count_mod, breaks = 20, col="lightgreen", main = "Histogram of View Counts for \n Projects Created by Males",xlab="View Count - Projects (Male)")
+```
+
+What this shows us is that most projects get very few views. The following plots present the same data, looking at proportions rather than raw counts:
+  
+```{r proportionFemale, echo=FALSE}
+view_count_table_female <- table(info_female$view_count_mod)
+views_female <- as.data.frame(view_count_table_female)
+proportions_views_f <- sapply(views_female$Freq, function(x,y=views_female$Freq) x/sum(y))
+views_female$proportion <- c(proportions_views_f)
+
+plot(views_female$proportion, cex = .3, col = "red", xlab= "Number of Views", ylab="Proportion of Projects", main = "Number of Views for \n Projects Created by Females")
+```
+```{r proportionMale, echo=FALSE}
+view_count_table_male <- table(info_male$view_count_mod)
+views_male <- as.data.frame(view_count_table_male)
+proportions_views_m <- sapply(views_male$Freq, function(x,y=views_male$Freq) x/sum(y))
+views_male$proportion <- c(proportions_views_m)
+
+plot(views_male$proportion, cex = .3, col = "red", xlab= "Number of Views", ylab="Proportion of Projects", main = "Number of Views for \n Projects Created by Males")
+```
+  
+Proportion of Projects Receiving a Given Number of Views
+
+After looking at some features of the entire sample, the data set was processed to add an additional feature, "prev.projects." This feature makes data on how many projects had been created prior to any given project easy to access, allowing the creation of subsets such as "first.project", "second.project", etc.
+
+While number of views is one measure of the interest generated by a project, it is not the only one available to us. A more active measure of positive interest in a given project is the number of love-its the project receives from other Scratchers. The following plots look at the distribution of love-its awarded to projects created by females and males.
+
+```{r loveItsFemale, echo=FALSE}
+love_count_table_female <- table(info_female$love_count)
+loves_female <- as.data.frame(love_count_table_female)
+proportions_loves_f <- sapply(loves_female$Freq, function(x,y=loves_female$Freq) x/sum(y))
+loves_female$proportion <- c(proportions_loves_f)
+
+plot(loves_female$proportion, cex = .3, col = "red", xlab= "Number of Loves", ylab="Proportion of Projects", main="Love-its Received by \n Projects Created by Females")
+```
+
+```{r loveItsMale, echo=FALSE}
+love_count_table_male <- table(info_male$love_count)
+loves_male <- as.data.frame(love_count_table_male)
+proportions_loves_m <- sapply(loves_male$Freq, function(x,y=loves_male$Freq) x/sum(y))
+loves_male$proportion <- c(proportions_loves_m)
+
+plot(loves_male$proportion, cex = .3, col = "red", xlab= "Number of Loves", ylab="Proportion of Projects", main="Love-its Received by \n Projects Created by Males")
+```
+  
+Not surprisingly, most projects receive a small number of love-its. What is notable from these two plots, however, is that the maximum number of love-its received by a single project created by a male is much higher than the maximum received by a project created by female. In addition, the plot shown above is a scatter plot. Thus, it is evident that it is not just a simgle male-created project that got a larger number of love-its than the highest love-it-earning female-created project. In spite of these two observations, the Scratcher with the maximum cumulative total number of love-its received is female (30,119 versus 23,188). For both females and males, the Scratcher with the maximum number of projects is not the same individual as the Scratcher with the largest cumulative love-its total.
+
+```{r stats.trivia, echo=FALSE}
+max.love.male <- max(info_male$running.lovecount)
+max.love.female <- max(info_female$running.lovecount)
+max.proj.male <- max(info_male$prev.projects)
+max.proj.female <- max(info_female$prev.projects)
+
+max.male.row.love <- info_male[info_male$running.lovecount==max.love.male,]
+#max.male.row.love$id # id = 449471
+max.male.row.projects <- info_male[info_male$prev.projects==max.proj.male,]
+#max.male.row.projects$id # id = 3672171
+
+max.female.row.love <- info_female[info_female$running.lovecount==max.love.female,]
+#max.female.row.love$id # id = 1808712
+max.female.row.projects <- info_female[info_female$prev.projects==max.proj.female,]
+#max.female.row.projects$id # id = 3504420
+```
+
+```{r SharedProportionsFunction, echo=FALSE}
+# Given any vector, will return the number of data values, NA values, and total entries
+shared.unshared <- function(data)
+{
+  shared <- sum(!is.na(data))
+  unshared <- sum(is.na(data))
+  total = shared + unshared
+  result = c(shared, unshared, total)
+  return(result)
+}
+```
+```{r SharingByProjectNumber, echo=FALSE}
+# Collects data on shared and unshared counts by project number
+# Returns the information in a list of lists format
+sharing.by.proj.number <- function(info_data, n, gender.val)
+{
+  result <- list()
+  values <- seq(n)-1
+  for (val in values){
+    current.data <- info_data$datetime_first_shared[info_data$prev.projects==val & info_data$gender==gender.val]
+    current.result <- shared.unshared(current.data)
+    result[[length(result)+1]] <- list(current.result)
+  }
+  return(result)
+}
+
+data.by.index <- function(data, n, index)
+{
+  result <- c()
+  indices <- seq(n)
+  for (i in indices) {
+      result <- c(result, data[[i]][[1]][index])
+  }
+  return(result)
+}
+# Collecting information on the first 1000 projects
+n = 1000
+data.for.plotting.female <- sharing.by.proj.number(info_data, n, "female")
+data.for.plotting.male <- sharing.by.proj.number(info_data, n, "male")
+female.shared.data <- data.by.index(data.for.plotting.female, n, 1)
+male.shared.data <- data.by.index(data.for.plotting.male, n, 1)
+female.unshared.data <- data.by.index(data.for.plotting.female, n, 2)
+male.unshared.data <- data.by.index(data.for.plotting.male, n, 2)
+female.total.data <- data.by.index(data.for.plotting.female, n, 3)
+male.total.data <- data.by.index(data.for.plotting.male, n, 3)
+
+```
+  
+We can now look at sharing based on project number and run analyses to look at the effect that reactions to earlier projects has on sharing of later projects.  
+```{r createDataFrameOfSharedProjects, echo=FALSE}
+# Create data frame containing info on shared/unshared projects by project number
+shared.unshared.projects <- data.frame(female.shared.data, female.unshared.data,female.total.data, male.shared.data, male.unshared.data, male.total.data)
+colnames(shared.unshared.projects) <- c("female.shared","female.unshared", "female.total","male.shared","male.unshared", "male.total")
+
+# Create columns for proporion shared by females and males
+shared.unshared.projects$female.proportion <- shared.unshared.projects$female.shared/shared.unshared.projects$female.total
+
+shared.unshared.projects$male.proportion <- shared.unshared.projects$male.shared/shared.unshared.projects$male.total
+
+# Create columns for total projects and proportion of total shared
+shared.unshared.projects$total.shared <- shared.unshared.projects$female.shared + shared.unshared.projects$male.shared
+
+shared.unshared.projects$total.unshared <- shared.unshared.projects$female.unshared + shared.unshared.projects$male.unshared
+
+shared.unshared.projects$total.total <- shared.unshared.projects$female.total + shared.unshared.projects$male.total
+
+shared.unshared.projects$total.proportion <- shared.unshared.projects$total.shared /shared.unshared.projects$total.total
+
+```
+  
+The following bar plot shows the proportions shared for each of 1st through 5th projects.
+```{r BarPlotFirstFiveProjects, echo=FALSE}
+
+barplot(shared.unshared.projects$total.proportion[1:5], names.arg = c("1st", "2nd", "3rd","4th","5th"), main="First through Fifth Projects: Proportions Shared", 
+        xlab= "Project Number", ylab= "Proportion")
+
+```
+  
+## 6. Data Analysis
+
+### Looking for Gender Differences in Project Sharing
+  
+There appears to be a decreasing trend in proportion of projects shared as the number of projects created increases. Next, we'll look at the data when grouped according to the gender of the project creator. The following bar plot displays the proportions shared by females and males, for easy comparison:
+  
+```{r AdjacentMFBarPlots, echo=FALSE}
+counts <- as.table(matrix(c(shared.unshared.projects$female.proportion[1:10], shared.unshared.projects$male.proportion[1:10]),ncol=10,byrow=TRUE))
+
+barplot(counts, names.arg = c("1st", "2nd", "3rd","4th","5th", "6th", "7th","8th","9th","10th"), main="First through Tenth Projects: Proportions Shared", 
+        xlab= "Project Number", col = c("red", "darkblue"), legend.text = c("female", "male"), beside=TRUE, args.legend = list(x="bottomright"))
+
+```
+
+
+### What Are the Sharing Patterns for Projects?
+  
+Performing a test of equal or given proportions (prop.test) will test the null hypothesis that the proportions in each group are the same.
+
+```{r propTestSharedProjects, echo=FALSE}
+shared_projects <- info_data[! is.na(info_data$datetime_first_shared),] 
+unshared_projects <- info_data[is.na(info_data$datetime_first_shared),] 
+
+shared_by_gender <- table(droplevels(shared_projects$gender))
+#shared_by_gender
+unshared_by_gender <- table(droplevels(unshared_projects$gender))
+#unshared_by_gender
+
+shared_projects <- as.vector(shared_by_gender) # Not great re-using the name here.
+non_shared_projects <- as.vector(unshared_by_gender)
+all_projects<- shared_projects + non_shared_projects
+
+prop.test(shared_projects, all_projects)
+
+```
+*Test of Proportions: Proportion of Shared Projects out of All Projects Created, by Gender*
+  
+Loking at the first five projects showed a decreasing trend with females consistently sharing a smaller proportion of their projects than men did. However, the proportions test over the whole dataset was not consistent with this pattern, meaning that at some point, females start sharing more projects relative to males. To get a better sense of what happens over time, we need to look at a longer trend.
+```{r TrendPlot, echo=FALSE}
+# Plot
+library(ggplot2)
+x = seq(n)
+y = data.frame(x,shared.unshared.projects$female.proportion, "F")
+colnames(y) <- c("project.number", "proportion","gender")
+z = data.frame(x, shared.unshared.projects$male.proportion, "M")
+colnames(z) <- c("project.number", "proportion","gender")
+df <- data.frame(rbind(y,z))
+
+df_small <- df[1:100,]
+df_small <- rbind(df_small, df[1001:1100,])
+
+p <- ggplot(data = df_small, aes(x=project.number, y=proportion)) + geom_line(aes(colour=gender))
+
+p + ggtitle("Plot of proportion of projects shared \n by project number and gender") +
+  xlab("Project number") + ylab("Proportion")
+
+```
+  
+As this plot demonstrates, although females start out less likely to share projects than males, if they go on to create more projects, they begin sharingi them at greater rates, and eventually overtake males for the proportion of projects shared. To see more precisely where the switchover occurs, looking at the data in tabular form is helpful:
+
+```{r sharingTable, echo=FALSE}
+row.numbers <- df$project.number[16:24]
+prop.shared.female <- df$proportion[16:24]
+prop.shared.male <- df$proportion[1016:1024]
+
+prop.shared.female <- round(prop.shared.female, 3)
+prop.shared.male <- round(prop.shared.male, 3)
+
+prop.shared.table <- as.table(matrix(c(prop.shared.female, prop.shared.male), ncol = 9, byrow=TRUE))
+
+colnames(prop.shared.table) <- row.numbers
+rownames(prop.shared.table) <- c("Female ", "Male")
+
+kable(prop.shared.table, main = "Proportion of Projects Shared by \n Project Number & Gender of Creator")
+
+```
+  
+*Table 2: Proportion of Projects Shared (Project Number 16-24)*
+  
+Looking at the actual proportion values, we see the crossover occurs at 20 projects created. Looking at an even longer trend covering data on 1000 projects created, we see that females, once they overtake males, retain this lead for a considerable period. Males don't catch up again until roughly 400 projects have been created and, at that point, the difference seems likely to have minimal, if any, practical significance (though this has not formally verified):
+
+```{r Plot1000Projects, echo=FALSE}
+p2 <- ggplot(data = df, aes(x=project.number, y=proportion)) + geom_line(aes(colour=gender))
+
+p2 + ggtitle("Plot of proportion of projects shared \n by project number and gender") +
+  xlab("Project number") + ylab("Proportion")
+```
+
+### Effect of First Project Receiving Loveits on Second Project Sharing
+  
+When a new Scratcher creates his or her first project, a decision must be made whether ot not to share the project. Once a project is shared, other Scratchers can view the project and react to it. Possible feedback includes the number of views the project attracts, the number of Love-its the project receives, the number of times the project is identified as a "Favorite", and whether or not the project receives comments. As a first filter for whether a shared project received peer approval, we will look at how Love-its correlate with future project sharing.
+  
+```{r FirstProject, echo=FALSE}
+#table(droplevels(first_project[!is.na(first_project$datetime_first_shared),])$gender)
+#female.first.shared <- first_project[!is.na(first_project$datetime_first_shared),] --try to delete this
+
+first_project <- info_data[info_data$prev.projects==0,]
+
+first_shared <- first_project[!is.na(first_project$datetime_first_shared) ,]
+
+first_shared_female <- first_shared[first_shared$gender=="female",]
+first_shared_male <- first_shared[first_shared$gender=="male",]
+
+first_shared_with_loves <- first_shared[first_shared$love_count>0,]
+first_shared_with_no_loves <- first_shared[first_shared$love_count==0,]
+
+```
+
+  
+```{r FirstProjectLoveTables, echo=FALSE}
+love.table <- table(droplevels(first_shared_with_loves$gender))
+#love.table
+
+no.love.table <- table(droplevels(first_shared_with_no_loves$gender))
+#no.love.table
+```
+  
+Just looking at raw numbers, we see that a relatively low proportion of first projects receiving Love-its. However, when we do a proportions based on project creator's gender, the difference in female and male projects is significant, with female-created first projects receiving fewer Love-its than male-created first projects:
+  
+```{r FirstProjectLoveIts, echo=FALSE}
+first_loves <- as.vector(love.table)
+first_no_loves <- as.vector(no.love.table)
+firsts <- first_loves + first_no_loves
+
+loves.table <- as.table(matrix(c(first_loves, first_no_loves), ncol = 2, byrow=TRUE))
+
+colnames(loves.table) <- c("Female", "Male")
+rownames(loves.table) <- c("Got LoveIts","Got NO LoveIts")
+
+kable(loves.table, main = "LoveIts and First Shared Project")
+```
+
+*Table 3: LoveIts and First Shared Project*
+  
+```{r propTestFirstLoves, echo=FALSE}
+
+prop.test(first_loves, firsts)
+
+```
+*Test of Proportions: Proportion of First Projects Getting LoveIts by Gender*
+
+### Effect of Positive Peer Recognition on Second Project Sharing
+  
+We will now use the data on first project sharing to see how receiving Love-its affects whether or not the second project is shared. First, we'll look at proportions of Scratchers sharing a second project after receiving Love-its for their first project, then at those sharing a second project after the first did NOT receive Love-its:
+  
+```{r FirstLoveSecondShare, echo=FALSE}
+
+# which second projects were preceded by projects that got loves?
+second_project <- info_data[info_data$prev.projects==1,]
+
+not_loved_first <- second_project[!(second_project$id %in% first_shared_with_loves$id),]
+loved_first <- second_project[second_project$id %in% first_shared_with_loves$id,]
+
+# Second projects sharing data - first project NOT considered
+second_project_shared <- second_project[!is.na(second_project$datetime_first_shared),]
+second.shared <- as.vector(table(droplevels(second_project_shared$gender)))
+second <- as.vector(table(droplevels(second_project$gender)))
+
+# Second projects shared, by whether or not first project got loves
+loved_first_second_shared <- second_project_shared[second_project_shared$id %in% first_shared_with_loves$id,]
+not_loved_first_second_shared <- second_project_shared[!second_project_shared$id %in% first_shared_with_loves$id,]
+
+# first projects with loves, by gender
+first.with.love <- table(droplevels(first_shared_with_loves$gender))
+
+# second projects shared after first loved, by gender
+second.shared.after.first.loved <- table(droplevels(loved_first_second_shared$gender))
+
+# first projects WITHOUT loves, by gender
+first.with.no.love <- table(droplevels(first_shared_with_no_loves$gender))
+
+# second projects shared after first NOT loved, by gender
+second.shared.after.first.not.loved <- table(droplevels(not_loved_first_second_shared$gender))
+
+# second project shared - first got LoveIts or not
+second_shared_first_loved <- as.vector(second.shared.after.first.loved)
+first_proj_got_loves <- as.vector(first.with.love)
+
+second_shared_first_not_loved <- as.vector(second.shared.after.first.not.loved)
+first_proj_got_no_loves <- as.vector(first.with.no.love)
+
+total.second.shared <- second_shared_first_loved + second_shared_first_not_loved
+
+first.second.table <- as.table(matrix(c(second_shared_first_loved, second_shared_first_not_loved, total.second.shared, second ), ncol = 2, byrow=TRUE))
+
+colnames(first.second.table) <- c("Female", "Male")
+rownames(first.second.table) <- c("1st Got LoveIts","1st Got NO LoveIts", "Total 2nd Shared Projects", "Total 2nd Projects")
+
+kable(first.second.table)
+```
+
+*Table 4: Sharing of Second Projects*
+```{r SharingSecondFirstLoved, echo=FALSE}
+prop.test(second_shared_first_loved, first_proj_got_loves)
+```
+  
+This proportions test is looking at what happens after a first project receives Love-its. We see that among Scratchers who create another project after receiving Love-its for their first project, approximately two-thirds of these second projects will be shared. Again, females are slightly less likely to share their second projects, even after receiving positive feedback for their first projects. This difference is statistically significant.
+```{r SharingSecondFirstNOTLoved, echo=FALSE}
+prop.test(second_shared_first_not_loved, first_proj_got_no_loves)
+```
+  
+If Scratchers go on to create a second project after their first project received no Love-its, fewer of these projects are shared. Only about half of second projects are shared after the first project is shared and fails to receive positive peer feedback. The pattern of females being slightly less likely to share is seen here as well.
+  
+Now, we'll look at second project sharing by Scratchers overall:
+
+```{r SecondProjectsSharing, echo=FALSE}
+second_projects <- table(droplevels(second_project$gender))
+no.first.love <- table(droplevels(first_shared_with_no_loves$gender))
+second.shared.no.first.love <- table(droplevels(not_loved_first_second_shared$gender))
+
+second_projects_shared <- as.vector(second.shared)
+second_projects_all <- as.vector(second_projects)
+
+prop.test(second_projects_shared, second_projects_all)
+```
+  
+This proportions test looks at the proportion of shared second projects for all second projects created, differing from the group analyzed above in that it includes second projects created by Scratchers who chose not to share their first projects, as well as those who shared their first projects. Similar to the pattern seen for first project sharing, relatively few created projects are actually shared.
+  
+Now we will look at the proportion of shared second projects whose creators got Love-its for their first project -- i.e. out of all second projects that are shared, how many are shared by people who received Loveits on their first projects?
+
+```{r propTestsFirstSecondProjects, echo=FALSE}
+first_loved <- as.vector(table(droplevels(loved_first$gender)))
+not.first_loved <- as.vector(table(droplevels(not_loved_first$gender)))
+prop.test(first_loved, second_projects_shared)
+```
+  
+Finally, this proportions test looks at the proportion of shared second projects whose creators did not receive Love-its for their first project -- i.e. out of all second projects that are shared, how many were created by prople who did not get Love-its for their first projects?
+```{r propTestsFirstSecondProjects2, echo=FALSE}
+prop.test(second_projects_shared, not.first_loved)
+```
+##7. Hypothesis Testing
+  
+To restate the null hypotheses being investigated:
+
+1) Projects created by females are just as likely to be shared as projects created by males.
+2) Projects created by females are just as likely to receive peer recognition as projects created by males.
+3) Scratchers whose shared projects receive no peer recognition are just as likely to share future projects as are Scratchers whose earlier shared projects did receive peer recognition.
+4) Female Scratchers whose shared projects receive no peer recognition are just as likely to share future projects as are male Scratchers whose shared projects receive no peer recognition.
+
+### Hypothesis 1
+* Projects created by females are just as likely to be shared as projects created by males.
+* logit(p(share) given gender, previous projects))
+
+```{r hyopthesis.1.logistic.regression, echo=FALSE}
+info_data$shared <- !is.na(info_data$datetime_first_shared)
+info_data$female <- info_data$gender == "female"
+
+hyp.1 <- glm(shared ~ female + log1p(prev.projects) + female * log1p(prev.projects), data=info_data, family=binomial("logit"))
+
+summary(hyp.1)
+
+library(texreg)
+
+table.string.hyp.1 <- texreg(hyp.1, return.string=TRUE)
+table.string.hyp.1
+
+
+# boy, no projects: 0.2768 = 1/(1+exp(-1*(-.96)))
+# boy, 3 projects: 0.2689414
+# girl, no projects: 0.2423204
+# girl, 3 projects:  0.2516183 
+```
+  
+Y = ln(p-hat/(1 - p-hat))
+Y = -0.96 - 0.18 FEMALE - 0.044log(previous projects) + 0.09 (FEMALE:log(previous projects))
+  
+### Hypothesis 2
+  
+For this test, a project was scored as 1 (received at least one Love-it) or 0 (received no Love-its).
+
+* Projects created by females are just as likely to receive peer recognition as projects created by males.
+* logit(p(love>0) given gender, previous proojects))
+
+```{r hyopthesis.2.logistic.regression, echo=FALSE}
+info_data$got.love = info_data$previous.total.love
+info_data$got.love[info_data$previous.total.love>0] <- 1
+hyp.2 <- glm(got.love ~ female + log1p(prev.projects), data=info_data, family=binomial("logit"))
+summary(hyp.2)
+
+table.string.hyp.2 <- texreg(hyp.2, return.string=TRUE)
+table.string.hyp.2
+```
+
+
+### Hypothesis 3
+  
+For this test, the log of the total of previously received Love-its was used.
+
+* Scratchers whose shared projects receive no peer recognition are just as likely to share future projects as are Scratchers whose earlier shared projects did receive peer recognition.
+* logit(p(share) given recognition, previous projects)
+
+```{r hyopthesis.3.logistic.regression, echo=FALSE}
+hyp.3 <- glm(shared ~ log1p(prev.projects) + log1p(previous.total.love), data=info_data, family=binomial("logit"))
+summary(hyp.3)
+
+table.string.hyp.3 <- texreg(hyp.3, return.string=TRUE)
+table.string.hyp.3
+```
+
+
+### Hypothesis 4
+  
+For this test, the log of the total of previously received Love-its was used. The interaction of female with a binary received Love-its or not term was also included.
+
+* Female Scratchers whose shared projects receive no peer recognition are just as likely to share future projects as are male Scratchers whose shared projects receive no peer recognition.
+* logit(p(share) given recognition, gender, previous projects)
+```{r hyopthesis.4.logistic.regression, echo=FALSE}
+hyp.4 <- glm(shared ~ female + log1p(prev.projects) + log1p(previous.total.love) + female * got.love, data=info_data, family=binomial("logit"))
+summary(hyp.4)
+
+table.string.hyp.4 <- texreg(hyp.4, return.string=TRUE)
+table.string.hyp.4
+```
+  
+### Future Work
+  
+The patterns reported in this document suggest interesting directions for further investigation. 
