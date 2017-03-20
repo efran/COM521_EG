@@ -1,8 +1,8 @@
 ---
 output:
-  html_document: default
-  pdf_document: default
   word_document: default
+  pdf_document: default
+  html_document: default
 ---
 ## Project Outline: 
 ### An Exploration of Gender Differences in Sharing Behavior on Scratch
@@ -312,9 +312,9 @@ barplot(shared.unshared.projects$total.proportion[1:5], names.arg = c("1st", "2n
 There appears to be a decreasing trend in proportion of projects shared as the number of projects created increases. Next, we'll look at the data when grouped according to the gender of the project creator. The following bar plot displays the proportions shared by females and males, for easy comparison:
   
 ```{r AdjacentMFBarPlots, echo=FALSE}
-counts <- as.table(matrix(c(shared.unshared.projects$female.proportion[1:5], shared.unshared.projects$male.proportion[1:5]),ncol=5,byrow=TRUE))
+counts <- as.table(matrix(c(shared.unshared.projects$female.proportion[1:10], shared.unshared.projects$male.proportion[1:10]),ncol=10,byrow=TRUE))
 
-barplot(counts, names.arg = c("1st", "2nd", "3rd","4th","5th"), main="First through Fifth Projects: Proportions Shared", 
+barplot(counts, names.arg = c("1st", "2nd", "3rd","4th","5th", "6th", "7th","8th","9th","10th"), main="First through Tenth Projects: Proportions Shared", 
         xlab= "Project Number", col = c("red", "darkblue"), legend.text = c("female", "male"), beside=TRUE, args.legend = list(x="bottomright"))
 
 ```
@@ -381,6 +381,7 @@ rownames(prop.shared.table) <- c("Female ", "Male")
 kable(prop.shared.table, main = "Proportion of Projects Shared by \n Project Number & Gender of Creator")
 
 ```
+  
 *Table 2: Proportion of Projects Shared (Project Number 16-24)*
   
 Looking at the actual proportion values, we see the crossover occurs at 20 projects created. Looking at an even longer trend covering data on 1000 projects created, we see that females, once they overtake males, retain this lead for a considerable period. Males don't catch up again until roughly 400 projects have been created and, at that point, the difference seems likely to have minimal, if any, practical significance (though this has not formally verified):
@@ -439,7 +440,9 @@ kable(loves.table, main = "LoveIts and First Shared Project")
 *Table 3: LoveIts and First Shared Project*
   
 ```{r propTestFirstLoves, echo=FALSE}
+
 prop.test(first_loves, firsts)
+
 ```
 *Test of Proportions: Proportion of First Projects Getting LoveIts by Gender*
 
@@ -549,7 +552,15 @@ To restate the null hypotheses being investigated:
 info_data$shared <- !is.na(info_data$datetime_first_shared)
 info_data$female <- info_data$gender == "female"
 
-summary(glm(shared ~ female + log1p(prev.projects) + female * log1p(prev.projects), data=info_data, family=binomial("logit")))
+hyp.1 <- glm(shared ~ female + log1p(prev.projects) + female * log1p(prev.projects), data=info_data, family=binomial("logit"))
+
+summary(hyp.1)
+
+library(texreg)
+
+table.string.hyp.1 <- texreg(hyp.1, return.string=TRUE)
+table.string.hyp.1
+
 
 # boy, no projects: 0.2768 = 1/(1+exp(-1*(-.96)))
 # boy, 3 projects: 0.2689414
@@ -559,7 +570,9 @@ summary(glm(shared ~ female + log1p(prev.projects) + female * log1p(prev.project
   
 Y = ln(p-hat/(1 - p-hat))
 Y = -0.96 - 0.18 FEMALE - 0.044log(previous projects) + 0.09 (FEMALE:log(previous projects))
+  
 ### Hypothesis 2
+  
 For this test, a project was scored as 1 (received at least one Love-it) or 0 (received no Love-its).
 
 * Projects created by females are just as likely to receive peer recognition as projects created by males.
@@ -568,7 +581,11 @@ For this test, a project was scored as 1 (received at least one Love-it) or 0 (r
 ```{r hyopthesis.2.logistic.regression, echo=FALSE}
 info_data$got.love = info_data$previous.total.love
 info_data$got.love[info_data$previous.total.love>0] <- 1
-summary(glm(got.love ~ female + log1p(prev.projects), data=info_data, family=binomial("logit")))
+hyp.2 <- glm(got.love ~ female + log1p(prev.projects), data=info_data, family=binomial("logit"))
+summary(hyp.2)
+
+table.string.hyp.2 <- texreg(hyp.2, return.string=TRUE)
+table.string.hyp.2
 ```
 
 
@@ -580,7 +597,11 @@ For this test, the log of the total of previously received Love-its was used.
 * logit(p(share) given recognition, previous projects)
 
 ```{r hyopthesis.3.logistic.regression, echo=FALSE}
-summary(glm(shared ~ log1p(prev.projects) + log1p(previous.total.love), data=info_data, family=binomial("logit")))
+hyp.3 <- glm(shared ~ log1p(prev.projects) + log1p(previous.total.love), data=info_data, family=binomial("logit"))
+summary(hyp.3)
+
+table.string.hyp.3 <- texreg(hyp.3, return.string=TRUE)
+table.string.hyp.3
 ```
 
 
@@ -591,6 +612,13 @@ For this test, the log of the total of previously received Love-its was used. Th
 * Female Scratchers whose shared projects receive no peer recognition are just as likely to share future projects as are male Scratchers whose shared projects receive no peer recognition.
 * logit(p(share) given recognition, gender, previous projects)
 ```{r hyopthesis.4.logistic.regression, echo=FALSE}
+hyp.4 <- glm(shared ~ female + log1p(prev.projects) + log1p(previous.total.love) + female * got.love, data=info_data, family=binomial("logit"))
+summary(hyp.4)
 
-summary(glm(shared ~ female + log1p(prev.projects) + log1p(previous.total.love) + female * got.love, data=info_data, family=binomial("logit")))
+table.string.hyp.4 <- texreg(hyp.4, return.string=TRUE)
+table.string.hyp.4
 ```
+  
+### Future Work
+  
+The patterns reported in this document suggest interesting directions for further investigation. 
