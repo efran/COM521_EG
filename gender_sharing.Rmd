@@ -75,7 +75,11 @@ info_data$gender[info_data$gender=="Female"] <- "female"
 info_data$gender[info_data$gender=="FEMALE"] <- "female"
 info_data$gender[info_data$gender=="female "] <- "female"
 info_data$gender[info_data$gender=="Male"] <- "male"
+<<<<<<< HEAD
 info_data$gender[info_data$gender=="mÃ¢le"] <- "male"
+=======
+info_data$gender[info_data$gender=="mâle"] <- "male"
+>>>>>>> 44faf3e2b799604405b398957b3c65026a0f40c2
 ```
 
 ```{r dataSummary, echo=FALSE}
